@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors'); // Importar el middleware cors
 const app = express();
+const fs = require('fs');
 
 
 // Configuración de middleware
@@ -54,4 +55,21 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+});
+
+
+
+const logStream = fs.createWriteStream('server.log', { flags: 'a' });
+app.use((req, res, next) => {
+  const logMessage = `${req.method} ${req.url} - ${new Date().toLocaleString()}\n`;
+  logStream.write(logMessage);
+  next();
+});
+
+app.post('/cars', (req, res) => {
+  const { name, license_plate, color } = req.body;
+  const timestamp = new Date().toLocaleString();
+
+  cars.push({ name, license_plate, color, timestamp });
+  res.send('Car registered successfully');
 });
