@@ -65,11 +65,3 @@ app.use((req, res, next) => {
   logStream.write(logMessage);
   next();
 });
-
-app.post('/cars', (req, res) => {
-  const { name, license_plate, color } = req.body;
-  const timestamp = new Date().toLocaleString();
-
-  cars.push({ name, license_plate, color, timestamp });
-  res.send('Car registered successfully');
-});
