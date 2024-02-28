@@ -1,14 +1,13 @@
 const express = require('express');
-const cors = require('cors'); // Importar el middleware cors
+const cors = require('cors');
 const app = express();
 const fs = require('fs');
 
+const IP_ADDRESS = 'localhost'
 
-// Configuración de middleware
-app.use(express.json()); // Para analizar solicitudes JSON
-app.use(cors()); // Usar el middleware cors para permitir solicitudes desde cualquier origen
+app.use(express.json()); 
+app.use(cors());
 
-// Datos en memoria para almacenar los carros registrados
 let cars = [];
 
 // Endpoint para registrar el ingreso de un carro
@@ -16,7 +15,6 @@ app.post('/cars', (req, res) => {
     const { name, license_plate, color } = req.body;
     const timestamp = new Date().toLocaleString();
 
-    // Aquí puedes guardar los datos del carro en la variable `cars`
     cars.push({ name, license_plate, color, timestamp });
     res.send('Car registered successfully');
 });
@@ -34,12 +32,12 @@ app.get('/cars', (req, res) => {
 // Endpoint para retirar un carro
 app.patch('/cars', (req, res) => {
   const { license_plate } = req.body;
-  // Aquí puedes implementar la lógica para retirar un carro de la lista `cars`
+
   cars = cars.filter(car => car.license_plate !== license_plate);
   res.send('Car removed successfully');
 });
 
-// Configuración de logging
+
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.url} - ${new Date().toLocaleString()}`);
   next();
@@ -51,12 +49,11 @@ app.use((err, req, res, next) => {
   res.status(500).send('Something went wrong!');
 });
 
-// Iniciar el servidor
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
 
+const PORT = process.env.PORT || 3000;
+app.listen(3000, IP_ADDRESS, () => {
+  console.log(`Servidor escuchando en http://${IP_ADDRESS}:3000`);
+});
 
 
 const logStream = fs.createWriteStream('server.log', { flags: 'a' });
