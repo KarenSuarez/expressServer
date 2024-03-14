@@ -24,13 +24,23 @@ const validateAutomobileData = (req, res, next) => {
   if (!licensePlateRegex.test(license_plate)) {
       return res.status(400).send('The plate must have the AAA-123 format');
   }
-
   next();
 };
+
+
+const existingCar = cars.find(car => car.license_plate === license_plate);
+if (existingCar) {
+    return res.status(400).send('Error: License plate already exists');
+  }
 
 app.post('/cars', validateAutomobileData, (req, res) => {
   const { name, license_plate, color } = req.body;
   const timestamp = new Date().toLocaleString();
+
+  const existingCar = cars.find(car => car.license_plate === license_plate);
+  if (existingCar) {
+      return res.status(400).send('Error: License plate already exists');
+  }
 
   cars.push({ name, license_plate, color, timestamp });
   res.send('Car registered successfully');
@@ -38,10 +48,16 @@ app.post('/cars', validateAutomobileData, (req, res) => {
 
 app.post('/cars', (req, res) => {
     res.status(405).send('Method Not Allowed');
-  });
+});
+
 
 app.get('/cars', (req, res) => {
   res.json(cars);
+
+  setTimeout(() => {
+    res.json(cars);
+  }, 2000); 
+  
 });
 
 app.patch('/cars', (req, res) => {
