@@ -12,12 +12,28 @@ app.use(cors());
 
 let cars = [];
 
-app.post('/cars', (req, res) => {
-    const { name, license_plate, color } = req.body;
-    const timestamp = new Date().toLocaleString();
 
-    cars.push({ name, license_plate, color, timestamp });
-    res.send('Car registered successfully');
+const validateAutomobileData = (req, res, next) => {
+  const { name, license_plate, color } = req.body;
+
+  if (!name || !license_plate || !color) {
+      return res.status(400).send('Required fields are missing (name, license_plate, color)');
+  }
+
+  const licensePlateRegex = /^[A-Za-z0-9]{3}-[A-Za-z0-9]{3}$/;
+  if (!licensePlateRegex.test(license_plate)) {
+      return res.status(400).send('The plate must have the AAA-123 format');
+  }
+
+  next();
+};
+
+app.post('/cars', validateAutomobileData, (req, res) => {
+  const { name, license_plate, color } = req.body;
+  const timestamp = new Date().toLocaleString();
+
+  cars.push({ name, license_plate, color, timestamp });
+  res.send('Car registered successfully');
 });
 
 app.post('/cars', (req, res) => {
@@ -61,4 +77,3 @@ app.use((err, req, res, next) => {
 app.listen(PORT, IP_ADDRESS, () => {
   console.log(`Servidor escuchando en http://${IP_ADDRESS}:${PORT}`);
 });
-
