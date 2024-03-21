@@ -11,6 +11,17 @@ const PORT_PERSISTENCE = process.env.PORT_PERSISTENCE;
 app.use(express.json());
 app.use(cors());
 
+const chaosMiddleware = (req, res, next) => {
+  const destroyChance = 0.45; 
+
+  if (Math.random() < destroyChance) {
+    return res.status(500).send('Chaos Monkey destroyed the container!');
+  }
+  next(); 
+};
+
+app.use(chaosMiddleware);
+
 app.use((req, res, next) => {
   const currentDate = new Date().toISOString();
   if (res.statusCode >= 400) {
