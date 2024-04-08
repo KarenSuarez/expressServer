@@ -2,11 +2,19 @@ const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
 const app = express();
-const fs = require("fs");
 require("dotenv").config();
 
+const PORT = process.env.PORT;
+const IP_ADDRESS = process.env.IP_ADDRESS;
 const IP_ADDRESS_PERSISTENCE = process.env.IP_ADDRESS_PERSISTENCE;
 const PORT_PERSISTENCE = process.env.PORT_PERSISTENCE;
+const SERVER_NAME = process.env.SERVER_NAME;
+const MONITOR_IP = process.env.MONITOR_IP;
+const MONITOR_PORT = process.env.MONITOR_PORT;
+const PORT_HOST= process.env.PORT_HOST;
+const HOST_IP= process.env.HOST_IP;
+const BALANCER_IP= process.env.BALANCER_IP;
+const BALANCER_PORT= process.env.BALANCER_PORT;
 
 app.use(express.json());
 app.use(cors());
@@ -29,25 +37,41 @@ app.use((req, res, next) => {
   next();
 });
 
-let cars = [];
+app.get("/health", (req, res) => {
+  res.status(200).send("Server is healthy");
+});
 
-const validateAutomobileData = (req, res, next) => {
-  const { name, license_plate, color } = req.body;
+let registered = false;
 
-  if (!name || !license_plate || !color) {
-    return res
-      .status(400)
-      .send("Required fields are missing (name, license_plate, color)");
+const registerServer = async () => {
+  try {
+    const response = await axios.post(`http://${MONITOR_IP}:${MONITOR_PORT}/register`, {
+      name: SERVER_NAME,
+      ip: HOST_IP,
+      port: PORT_HOST,
+    });
+    console.log("Server registered successfully in monitor:", response.data);
+
+    if (BALANCER_IP && BALANCER_PORT) {
+      const balancerResponse = await axios.post(`http://${BALANCER_IP}:${BALANCER_PORT}/registerServer`, {
+        ip: HOST_IP,
+        port: PORT_HOST,
+      });
+      console.log("Server registered successfully in balancer:", balancerResponse.data);
+    } else {
+      console.log("Balancer IP and port not defined, skipping registration in the balancer.");
+    }
+
+    registered = true;
+  } catch (error) {
+    console.error("Error registering server:", error.response?.data || error.message);
+    registered = false;
   }
-
-  const licensePlateRegex = /^[A-Za-z0-9]{3}-[A-Za-z0-9]{3}$/;
-  if (!licensePlateRegex.test(license_plate)) {
-    return res.status(400).send("The plate must have the AAA-123 format");
-  }
-  next();
 };
 
-app.post("/cars", validateAutomobileData, async (req, res) => {
+registerServer();
+
+app.post("/cars", async (req, res) => {
   try {
     const { name, license_plate, color } = req.body;
     const response = await axios.post(
@@ -59,10 +83,6 @@ app.post("/cars", validateAutomobileData, async (req, res) => {
     console.error("Error registering car:", error);
     res.status(500).send("Error registering car");
   }
-});
-
-app.post("/cars", (req, res) => {
-  res.status(405).send("Method Not Allowed");
 });
 
 app.get("/cars", async (req, res) => {
@@ -101,9 +121,6 @@ app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).send("Something went wrong!");
 });
-
-const PORT = process.env.PORT;
-const IP_ADDRESS = process.env.IP_ADDRESS;
 
 app.listen(PORT, IP_ADDRESS, () => {
   console.log(`Servidor escuchando en http://${IP_ADDRESS}:${PORT}`);
